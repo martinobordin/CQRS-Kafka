@@ -1,4 +1,4 @@
-﻿using CQRS.Core.CQRS;
+﻿using CQRS.Core.Commands;
 using CQRS.Core.Infrastructure;
 
 namespace Post.Query.Infrastructure;

@@ -1,7 +1,9 @@
-﻿namespace CQRS.Core.CQRS;
+﻿namespace CQRS.Core.Events;
 
-public abstract class BaseEvent : Message
+public abstract class BaseEvent
 {
+    public Guid Id { get; set; }
+
     protected BaseEvent(string type)
     {
         if (string.IsNullOrWhiteSpace(type))

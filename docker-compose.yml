@@ -1,0 +1,31 @@
+version: '3.4'
+
+services:
+  post.query.db:
+    container_name: post.query.db
+    restart: always
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+        - "1433:1433"
+    environment:
+        SA_PASSWORD: "admin12345"
+        ACCEPT_EULA: "Y"
+
+  post.query.api:
+    container_name: post.query.api
+    image: ${DOCKER_REGISTRY-}postqueryapi
+    depends_on:
+        - post.query.db
+    build:
+      context: .
+      dockerfile: SM-Post/Post.Query/Post.Query.Api/Dockerfile
+    environment:
+      - ConnectionStrings__SqlServer=Server=post.query.db;Database=CQRS-Kafka;User Id=sa;Password=admin12345;TrustServerCertificate=true;
+
+  post.cmd.api:
+    container_name: post.cmd.api
+    image: ${DOCKER_REGISTRY-}postcmdapi
+    build:
+      context: .
+      dockerfile: SM-Post/Post.Cmd/Post.Cmd.Api/Dockerfile
+

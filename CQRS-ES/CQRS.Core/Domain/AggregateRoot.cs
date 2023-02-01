@@ -1,56 +1,56 @@
-﻿using CQRS.Core.CQRS;
+﻿using CQRS.Core.Events;
 
-namespace CQRS.Core.Domain
+namespace CQRS.Core.Domain;
+
+public abstract class AggregateRoot
 {
-    public abstract class AggregateRoot
+    public const int StartVersion = -1;
+    public Guid Id { get; protected  set; }
+
+    private readonly List<BaseEvent> changes = new();
+
+    public int Version { get; set; } = StartVersion;
+
+    public IReadOnlyCollection<BaseEvent> GetUncommitedChanges()
     {
-        public Guid Id { get; protected  set; }
+        return changes.AsReadOnly();
+    }
 
-        private readonly List<BaseEvent> changes = new();
+    public void MarkChangesAsCommitted()
+    {
+        changes.Clear();
+    }
 
-        public int Version { get; protected set; } = -1;
+    private void ApplyChange(BaseEvent @event, bool isNew)
+    {
+        var eventType = @event.GetType();
+        var concreteAggregate = this.GetType();
+        var concreteApplyMethod = concreteAggregate
+            .GetMethod("Apply", new Type[] { eventType });
 
-        public IReadOnlyCollection<BaseEvent> GetUncommitedChanges()
+        if (concreteApplyMethod == null)
         {
-            return changes.AsReadOnly();
+            throw new InvalidOperationException($"The Apply method for the event {eventType.Name} was not found in the aggregate {concreteAggregate.Name}");
         }
 
-        public void MarkChangesAsCommitted()
+        concreteApplyMethod.Invoke(this, new object[] { @event });
+
+        if (!isNew )
         {
-            changes.Clear();
+            changes.Add(@event);
         }
+    }
 
-        private void ApplyChange(BaseEvent @event, bool isNew)
+    protected void RaiseEvent(BaseEvent @event)
+    {
+        ApplyChange(@event, true);
+    }
+
+    public void ReplayEvents(IEnumerable<BaseEvent> events)
+    {
+        foreach (var @event in events)
         {
-            var eventType = @event.GetType();
-            var concreteAggregate = this.GetType();
-            var concreteApplyMethod = concreteAggregate
-                .GetMethod("Apply", new Type[] { eventType });
-
-            if (concreteApplyMethod == null)
-            {
-                throw new InvalidOperationException($"The Apply method for the event {eventType.Name} was not found in the aggregate {concreteAggregate.Name}");
-            }
-
-            concreteApplyMethod.Invoke(this, new object[] { @event });
-
-            if (!isNew )
-            {
-                changes.Add(@event);
-            }
-        }
-
-        protected void RaiseEvent(BaseEvent @event)
-        {
-            ApplyChange(@event, true);
-        }
-
-        public void ReplayEvents(IEnumerable<BaseEvent> events)
-        {
-            foreach (var @event in events)
-            {
-                ApplyChange(@event, false);
-            }
+            ApplyChange(@event, false);
         }
     }
 }
