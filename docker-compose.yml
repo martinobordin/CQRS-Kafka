@@ -1,6 +1,31 @@
 version: '3.4'
 
 services:
+
+  zookeeper:
+    image: bitnami/zookeeper
+    restart: always
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper_data:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: bitnami/kafka
+    ports:
+      - "9092:9092"
+    restart: always
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+    depends_on:
+      - zookeeper
+
   post.query.db:
     container_name: post.query.db
     restart: always
@@ -14,18 +39,43 @@ services:
   post.query.api:
     container_name: post.query.api
     image: ${DOCKER_REGISTRY-}postqueryapi
+    ports:
+      - "8000:80"
     depends_on:
         - post.query.db
+        - kafka
     build:
       context: .
       dockerfile: SM-Post/Post.Query/Post.Query.Api/Dockerfile
     environment:
       - ConnectionStrings__SqlServer=Server=post.query.db;Database=CQRS-Kafka;User Id=sa;Password=admin12345;TrustServerCertificate=true;
+      - KAFKA_TOPIC=PostEventsTopic
+
+  post.cmd.db:
+    container_name:  post.cmd.db
+    restart: always
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
 
   post.cmd.api:
     container_name: post.cmd.api
     image: ${DOCKER_REGISTRY-}postcmdapi
+    ports:
+      - "8001:80"
+    depends_on:
+      - post.cmd.db
+      - kafka
     build:
       context: .
       dockerfile: SM-Post/Post.Cmd/Post.Cmd.Api/Dockerfile
+    environment:
+      - MongoDbConfig__ConnectionString=mongodb://post.cmd.db:27017
+      - KAFKA_TOPIC=PostEventsTopic
 
+volumes:
+  mongo_data:
+  zookeeper_data:
+  kafka_data:

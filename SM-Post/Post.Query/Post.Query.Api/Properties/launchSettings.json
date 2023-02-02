@@ -5,7 +5,8 @@
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "KAFKA_TOPIC": "PostEventsTopic"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7222;http://localhost:5077"
@@ -15,7 +16,8 @@
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "KAFKA_TOPIC": "PostEventsTopic"
       }
     },
     "Docker": {

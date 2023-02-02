@@ -3,7 +3,6 @@ using CQRS.Core.Events;
 using CQRS.Core.Exceptions;
 using CQRS.Core.Infrastructure;
 using CQRS.Core.Producers;
-using System.Globalization;
 
 namespace Post.Cmd.Infrastructure.Stores;
 

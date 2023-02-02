@@ -21,6 +21,7 @@ public class CommandDispatcher : ICommandDispatcher
         if (handlers.TryGetValue(command.GetType(), out Func<BaseCommand, Task>? handler))
         {
             await handler(command);
+            return;
         }
 
         throw new InvalidOperationException("No command handler was registered");

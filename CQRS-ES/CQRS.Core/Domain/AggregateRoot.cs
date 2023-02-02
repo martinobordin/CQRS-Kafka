@@ -35,7 +35,7 @@ public abstract class AggregateRoot
 
         concreteApplyMethod.Invoke(this, new object[] { @event });
 
-        if (!isNew )
+        if (isNew )
         {
             changes.Add(@event);
         }
