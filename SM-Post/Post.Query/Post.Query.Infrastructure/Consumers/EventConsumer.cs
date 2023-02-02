@@ -1,5 +1,4 @@
-﻿using Amazon.Runtime.Internal.Util;
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using CQRS.Core.Consumers;
 using CQRS.Core.Events;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,45 +14,55 @@ namespace Post.Query.Infrastructure.Consumers;
 public class EventConsumer : IEventConsumer
 {
     private readonly ConsumerConfig consumerConfig;
+    private readonly ILogger<EventConsumer> logger;
     private readonly IEventHandler eventHandler;
 
-    public EventConsumer(IOptions<ConsumerConfig> consumerConfig, IEventHandler eventHandler)
+    public EventConsumer(ILogger<EventConsumer> logger, IOptions<ConsumerConfig> consumerConfig, IEventHandler eventHandler)
     {
+        this.logger = logger;
         this.consumerConfig = consumerConfig.Value;
         this.eventHandler = eventHandler;
     }
 
     public void Consume(string topic)
     {
-        using var consumer = new ConsumerBuilder<string, string>(consumerConfig)
-            .SetKeyDeserializer(Deserializers.Utf8)
-            .SetValueDeserializer(Deserializers.Utf8)
-            .Build();
-
-        consumer.Subscribe(topic);
-
-        while (true)
+        try
         {
-            var consumerResult = consumer.Consume();
+            using var consumer = new ConsumerBuilder<string, string>(consumerConfig)
+                .SetKeyDeserializer(Deserializers.Utf8)
+                .SetValueDeserializer(Deserializers.Utf8)
+                .Build();
 
-            if (consumerResult?.Message == null)
+            consumer.Subscribe(topic);
+
+            while (true)
             {
-                continue;
+                var consumerResult = consumer.Consume();
+
+                if (consumerResult?.Message == null)
+                {
+                    continue;
+                }
+
+                var jsonSerializerOptions = new JsonSerializerOptions() { Converters = { new EventJsonConverter() } };
+
+                var @event = JsonSerializer.Deserialize<BaseEvent>(consumerResult.Message.Value, jsonSerializerOptions)!;
+
+                var handlerMethod = eventHandler.GetType().GetMethod("On", new Type[] { @event.GetType() });
+
+                if (handlerMethod == null)
+                {
+                    throw new InvalidOperationException($"Could not find event handler method for event {@event.GetType()}");
+                }
+
+                handlerMethod.Invoke(eventHandler, new object[] { @event });
+                consumer.Commit(consumerResult);
             }
-
-            var jsonSerializerOptions = new JsonSerializerOptions() { Converters = { new EventJsonConverter() } };
-
-            var @event = JsonSerializer.Deserialize<BaseEvent>(consumerResult.Message.Value, jsonSerializerOptions)!;
-
-            var handlerMethod = eventHandler.GetType().GetMethod("On", new Type[] { @event.GetType() });
-
-            if (handlerMethod == null)
-            {
-                throw new InvalidOperationException($"Could not find event handler method for event {@event.GetType()}");
-            }
-
-            handlerMethod.Invoke(eventHandler, new object[] { @event });
-            consumer.Commit(consumerResult);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occured while consuming the topic {topic}", topic);
+            throw;
         }
     }
 }
