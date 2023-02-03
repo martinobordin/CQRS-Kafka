@@ -12,8 +12,7 @@ services:
       - "zookeeper_data:/bitnami"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-    networks:
-      - kafka-network
+
   kafka:
     container_name: kafka
     image: bitnami/kafka
@@ -26,12 +25,11 @@ services:
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_LISTENERS=PLAINTEXT://:9092
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://host.docker.internal:9092
 
     depends_on:
       - zookeeper
-    networks:
-      - kafka-network
+
 
   post.query.db:
     container_name: post.query.db
@@ -57,7 +55,7 @@ services:
     environment:
       - ConnectionStrings__SqlServer=Server=post.query.db;Database=CQRS-Kafka;User Id=sa;Password=admin12345;TrustServerCertificate=true;
       - KAFKA_TOPIC=PostEventsTopic
-      - ConsumerConfig__BootstrapServers=kafka:9092
+      - ConsumerConfig__BootstrapServers=host.docker.internal:9092
 
   post.cmd.db:
     container_name:  post.cmd.db
@@ -82,7 +80,7 @@ services:
     environment:
       - MongoDbConfig__ConnectionString=mongodb://post.cmd.db:27017
       - KAFKA_TOPIC=PostEventsTopic
-      - ProducerConfig__BootstrapServers=kafka:9092
+      - ProducerConfig__BootstrapServers=host.docker.internal:9092
 
 volumes:
   zookeeper_data:
@@ -92,5 +90,3 @@ volumes:
   mongodb_data:
     driver: local
 
-networks:
-  kafka-network:
