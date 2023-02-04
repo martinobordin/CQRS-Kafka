@@ -40,7 +40,8 @@ public class EventStore : IEventStore
                 AggregateIdentifier = aggregateId,
                 AggregateType = typeof(T).Name,
                 EventType = eventType,
-                EventData = @event
+                EventData = @event,
+                Version = version
             };
 
             await eventStoreRepository.AppendAsync(eventModel);
@@ -59,6 +60,6 @@ public class EventStore : IEventStore
             throw new AggregateNotFoundException(aggregateId, typeof(T).Name);
         }
 
-        return eventStream.OrderBy(x => x.Version).Select(x => x.EventData).ToList();
+        return eventStream.Select(x => x.EventData).ToList();
     }
 }

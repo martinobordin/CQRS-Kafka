@@ -24,6 +24,6 @@ public class EventStoreRepository : IEventStoreRepository
 
     public async Task<List<EventModel>> FindByAggregateIdAsync(Guid aggregateId)
     {
-        return await eventStoreCollection.Find(x => x.AggregateIdentifier == aggregateId).ToListAsync().ConfigureAwait(false);
+        return await eventStoreCollection.Find(x => x.AggregateIdentifier == aggregateId).SortBy(x => x.Version).ToListAsync().ConfigureAwait(false);
     }
 }

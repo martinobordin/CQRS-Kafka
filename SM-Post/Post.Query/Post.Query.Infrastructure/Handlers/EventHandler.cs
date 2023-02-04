@@ -72,7 +72,7 @@ public class EventHandler : IEventHandler
 
     public async Task On(CommentUpdatedEvent @event)
     {
-        var comment = await commentRepository.GetByIdAsync(@event.Id);
+        var comment = await commentRepository.GetByIdAsync(@event.CommentId);
 
         if (comment == null)
         {
