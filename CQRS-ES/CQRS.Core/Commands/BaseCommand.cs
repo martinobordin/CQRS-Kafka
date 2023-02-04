@@ -2,5 +2,5 @@
 
 public abstract class BaseCommand
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
 }

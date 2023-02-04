@@ -23,7 +23,7 @@ public class PostEventSourcingHandler : IEventSourcingHandler<PostAggregate>
         var aggregate = new PostAggregate();
         var events = await eventStore.GetEventsAsync<PostAggregate>(aggregateId);
 
-        if (events == null || events.Any())
+        if (events == null || !events.Any())
         {
             return aggregate;
         }
