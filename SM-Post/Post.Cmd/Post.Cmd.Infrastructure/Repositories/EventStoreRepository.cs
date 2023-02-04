@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace Post.Cmd.Infrastructure.Repositories;
-
+ 
 public class EventStoreRepository : IEventStoreRepository
 {
     private readonly IMongoCollection<EventModel> eventStoreCollection;
@@ -22,8 +22,14 @@ public class EventStoreRepository : IEventStoreRepository
         await eventStoreCollection.InsertOneAsync(@event).ConfigureAwait(false);
     }
 
+    public async Task<List<EventModel>> FindAllAsync()
+    {
+        return await eventStoreCollection.Find(x => true).SortBy(x => x.Version).ToListAsync().ConfigureAwait(false);
+    }
+
     public async Task<List<EventModel>> FindByAggregateIdAsync(Guid aggregateId)
     {
         return await eventStoreCollection.Find(x => x.AggregateIdentifier == aggregateId).SortBy(x => x.Version).ToListAsync().ConfigureAwait(false);
     }
+
 }

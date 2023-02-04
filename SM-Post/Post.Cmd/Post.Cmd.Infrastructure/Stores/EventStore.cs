@@ -51,6 +51,18 @@ public class EventStore : IEventStore
         }
     }
 
+    public async Task<List<Guid>> GetAggregateIdsAsyc()
+    {
+        var eventStream = await eventStoreRepository.FindAllAsync();
+
+        if (eventStream == null || !eventStream.Any())
+        {
+            return Enumerable.Empty<Guid>().ToList();
+        }
+
+        return eventStream.Select(x => x.AggregateIdentifier).Distinct().ToList();
+    }
+
     public async Task<List<BaseEvent>> GetEventsAsync<T>(Guid aggregateId) where T : AggregateRoot
     {
         var eventStream = await eventStoreRepository.FindByAggregateIdAsync(aggregateId);

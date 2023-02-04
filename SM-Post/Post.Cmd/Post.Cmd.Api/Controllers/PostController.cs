@@ -1,5 +1,6 @@
 using CQRS.Core.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
 using Post.Cmd.Api.Commands;
 
 namespace Post.Cmd.Api.Controllers;
@@ -68,6 +69,14 @@ public class PostController : ControllerBase
     public async Task<ActionResult> DeletePostAsync(Guid id, DeletePostCommand command)
     {
         command.Id = id;
+        await commandDispatcher.SendAsync(command);
+        return Ok();
+    }
+
+    [HttpPost("[action]")]
+    public async Task<ActionResult> RestoreDbAsync()
+    {
+        var command = new RestoreReadDbCommand();
         await commandDispatcher.SendAsync(command);
         return Ok();
     }

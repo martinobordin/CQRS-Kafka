@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using Post.Query.Domain;
 using Post.Query.Domain.Repository;
 using Post.Query.Infrastructure.DataAccess;
